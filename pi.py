@@ -1,18 +1,26 @@
 import time
-import RPi.GPIO as GPIO
+import gpiod
 import urllib.request
 
-REPO_URL = "https://github.com/lyr-7D1h/button_matrix"
+chip = gpiod.Chip("gpiochip4")
+
 WLED_URL = "http://192.168.2.21/win"
 PINS = [14, 15, 18, 23, 24, 25, 8, 7]
 
-GPIO.setmode(GPIO.BOARD)
-for i in range(4):
-    GPIO.setup(PINS[i], GPIO.OUT)
-    GPIO.output(PINS[i], GPIO.HIGH)
+lines = [chip.get_line(i) for i in PINS]
 
-for i in range(4, 8):
-    GPIO.setup(PINS[i], GPIO.IN, GPIO.PUD_UP)
+
+def setup():
+    for i in range(4):
+        lines[i].request(consumer="button", type=gpiod.LINE_REQ_DIR_OUT)
+        lines[i].set_value(1)
+
+    for i in range(4, 8):
+        lines[i].request(
+            consumer="button",
+            type=gpiod.LINE_REQ_DIR_IN,
+            flags=gpiod.LINE_REQ_FLAG_BIAS_PULL_UP,
+        )
 
 
 def request(url: str):
@@ -48,25 +56,24 @@ def button_pressed(i: int):
             wled.set_brightness(255)
 
 
-last_update = time.time()
-
-
 def loop():
     for r in range(4):
-        GPIO.output(PINS[r], GPIO.LOW)
-        for c in range(4):
-            if GPIO.input(PINS[c]) == GPIO.LOW:
-                i = r * 4 + c
+        lines[r].set_value(0)
+        for c in range(4, 8):
+            if lines[c].get_value() == 0:
+                i = r * 4 + c % 4
                 button_pressed(i)
-                while GPIO.input(PINS[c]) == GPIO.LOW:
+                while lines[c].get_value() == 0:
                     time.sleep(0.01)
-        GPIO.output(PINS[r], GPIO.LOW)
+        lines[r].set_value(1)
 
 
+setup()
 try:
     while True:
         loop()
         time.sleep(0.1)
 except KeyboardInterrupt:
     print("Exiting...")
-    GPIO.cleanup()
+    for line in lines:
+        line.release()
