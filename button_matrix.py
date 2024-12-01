@@ -34,7 +34,7 @@ class WLED:
         pass
 
     def set_brightness(self, brightness: int):
-        request(self.url + f"&B={brightness}")
+        request(self.url + f"&A={brightness}")
 
     def toggle_power(self):
         request(self.url + "&T=2")
