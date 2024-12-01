@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 import time
 import gpiod
 import urllib.request
