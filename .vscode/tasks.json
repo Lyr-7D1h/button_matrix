@@ -1,0 +1,15 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "type": "shell",
+      "command": "pio run && pio run -t upload && pio device monitor",
+      "problemMatcher": ["$platformio"],
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      },
+      "label": "Build and upload"
+    }
+  ]
+}
